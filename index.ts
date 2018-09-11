@@ -64,7 +64,7 @@ async function start(): Promise<void> {
         console.log(`uploaded  ${emoji.name}.`);
     }
     console.log(' ');
-    console.log(`Uploaded ${emojiPack.emojis} emojis.`);
+    console.log(`Uploaded ${emojiPack.emojis.length} emojis.`);
 
     await browser.close();
 }
