@@ -1,11 +1,24 @@
 # Slack Emoji Import
 
+
+[![npm version](https://badge.fury.io/js/slack-emoji-import.svg)](https://badge.fury.io/js/slack-emoji-import)
+
+
 A slack builk emoji importer built on [puppeteer](https://pptr.dev/) heavily based on [emojipacks](https://github.com/lambtron/emojipacks).
+
 
 ## Usage
 
 * `npm i -g slack-emoji-import`
 * `slack-emoji-import path/to/emoji-pack.yaml`
+
+
+## TODO / Known issues
+
+* Aliases are not supported
+* Multiple yaml file import
+* Crashes if something goes wrong (i.e. already an emoji with this name error)
+
 
 ## Emoji Packs
 
@@ -42,3 +55,4 @@ You can find emoji packs here: [https://emojipacks.com/](https://emojipacks.com/
 - [Shiba Stickers](https://raw.githubusercontent.com/lambtron/emojipacks/master/packs/shiba.yaml) (from Messenger)
 - [gamedevmoji](https://raw.githubusercontent.com/niksudan/gamedevmoji/master/gamedevicons.yaml)
 - [AWS simple icons](https://raw.githubusercontent.com/Surgo/aws_emojipacks/master/noprefix-emojipacks.yml)
+
