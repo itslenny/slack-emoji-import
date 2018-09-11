@@ -4,7 +4,7 @@
 [![npm version](https://badge.fury.io/js/slack-emoji-import.svg)](https://badge.fury.io/js/slack-emoji-import)
 
 
-A slack builk emoji importer built on [puppeteer](https://pptr.dev/) heavily based on [emojipacks](https://github.com/lambtron/emojipacks).
+A slack builk emoji importer built on [puppeteer](https://pptr.dev/) heavily based on [emojipacks](https://github.com/lambtron/emojipacks) (which wasn't working due to a slack update when I created this).
 
 
 ## Usage
