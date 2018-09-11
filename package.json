@@ -1,0 +1,38 @@
+{
+  "name": "slack-emoji-import",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "slack-emoji-import":"./bin/index.js"
+  },
+  "scripts": {
+    "start": "ts-node index.ts",
+    "prepare": "tsc",
+    "test": "echo \"NO TEST FOR YOU!!\" && exit 1"
+  },
+  "author": "Lenny Urbanowski",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/itslenny/slack-emoji-import"
+  },  
+  "license": "MIT",
+  "files": [
+    "index.js",
+    "bin/index.js"
+  ],
+  "dependencies": {
+    "commander": "^2.18.0",
+    "js-yaml": "^3.12.0",
+    "prompt": "^1.0.0",
+    "puppeteer": "^1.8.0",
+    "request": "^2.88.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^3.11.2",
+    "@types/puppeteer": "^1.6.3",
+    "@types/request": "^2.47.1",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.0.3"
+  }
+}
