@@ -20,6 +20,7 @@ interface UserInput {
     host: string;
     email: string;
     password: string;
+    show: boolean;
 }
 
 if (process.argv.length < 3) {
@@ -28,9 +29,8 @@ if (process.argv.length < 3) {
 }
 
 const TEMP_DIR = resolve(__dirname, '.tmp');
-const MIME_TYPES = new Set(['jpg', 'jpeg', 'png', 'gif']);
 const ENTRY_URL_FACTORY = host => `https://${host}.slack.com/?redir=%2Fcustomize%2Femoji`;
-const YAML_PATH = resolve(__dirname, process.argv[2]);
+const YAML_PATH = resolve(process.cwd(), process.argv[2]);
 
 try {
     mkdirSync(TEMP_DIR);
@@ -44,7 +44,7 @@ start();
 async function start(): Promise<void> {
     const userInput = await getUserInput();
 
-    const browser = await puppeteer.launch({ headless: false, defaultViewport: { width: 1200, height: 1000 } });
+    const browser = await puppeteer.launch({ headless: !userInput.show, defaultViewport: { width: 1200, height: 1000 } });
     const browserCtx = await browser.createIncognitoBrowserContext();
     const page = await browserCtx.newPage();
 
@@ -87,7 +87,14 @@ function getUserInput(): Promise<UserInput> {
                 name: 'password',
                 hidden: true,
                 required: true
-            }
+            },
+            {
+                description: 'Show browser',
+                name: 'show',
+                type: 'boolean',
+                default: false,
+                required: false
+            },            
         ],
             (err, result) => err ? promiseReject(err) : promiseResolve(result),
         )
