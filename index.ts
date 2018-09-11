@@ -44,6 +44,7 @@ start();
 async function start(): Promise<void> {
     const userInput = await getUserInput();
 
+    console.log('Launching browser...');
     const browser = await puppeteer.launch({ headless: !userInput.show, defaultViewport: { width: 1200, height: 1000 } });
     const browserCtx = await browser.createIncognitoBrowserContext();
     const page = await browserCtx.newPage();
@@ -62,6 +63,8 @@ async function start(): Promise<void> {
         await upload(page, imagePath, emoji.name).then(sleep(10));
         console.log(`uploaded  ${emoji.name}.`);
     }
+    console.log(' ');
+    console.log(`Uploaded ${emojiPack.emojis} emojis.`);
 
     await browser.close();
 }
@@ -105,7 +108,6 @@ function getUserInput(): Promise<UserInput> {
  * 
  */
 async function login(page: Page, userInput: UserInput): Promise<void> {
-    console.log('userInput', userInput);
     await page.goto(ENTRY_URL_FACTORY(userInput.host));
 
     const emailInputSelector = '#signin_form input[type=email]';
