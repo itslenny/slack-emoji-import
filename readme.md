@@ -11,6 +11,7 @@ A slack builk emoji importer built on [puppeteer](https://pptr.dev/) heavily bas
 
 * `npm i -g slack-emoji-import`
 * `slack-emoji-import path/to/emoji-pack.yaml`
+* follow on screen prompts
 
 
 ## TODO / Known issues
