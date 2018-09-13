@@ -19,6 +19,7 @@ A slack builk emoji importer built on [puppeteer](https://pptr.dev/) heavily bas
 * Aliases are not supported
 * Multiple yaml file import
 * Crashes if something goes wrong (i.e. already an emoji with this name error)
+* Maybe some tests???
 
 
 ## Emoji Packs
