@@ -160,8 +160,7 @@ function downloadImage(url: string): Promise<string> {
  * 
  */
 async function upload(page: Page, imagePath: string, name: string): Promise<void> {
-
-    const addEmojiButtonElement = await page.waitForSelector('.p-customize_emoji_wrapper .c-button--primary', { visible: true });
+	const addEmojiButtonElement = await page.waitForSelector('.p-customize_emoji_wrapper__custom_button', { visible: true});
     await addEmojiButtonElement.click();
 
     const fileInputElement = await page.waitForSelector('input#emojiimg');
