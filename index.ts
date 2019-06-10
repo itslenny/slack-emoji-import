@@ -160,8 +160,21 @@ function downloadImage(url: string): Promise<string> {
  * 
  */
 async function upload(page: Page, imagePath: string, name: string): Promise<void> {
-	const addEmojiButtonElement = await page.waitForSelector('.p-customize_emoji_wrapper__custom_button', { visible: true});
-    await addEmojiButtonElement.click();
+	await page.evaluate(async () => {
+
+		var addEmojiButtonSelector = ".p-customize_emoji_wrapper__custom_button";
+		// Wait for emoji button to appear
+		while(!document.querySelector(addEmojiButtonSelector)) {
+			await new Promise(r => setTimeout(r, 500));
+		}
+		var class_name = addEmojiButtonSelector.substring(1, addEmojiButtonSelector.length);
+		const addEmojiButtonElement = <HTMLElement>document.getElementsByClassName(class_name)[0];
+
+  		if (!addEmojiButtonElement)
+    		throw new Error('Add Emoji Button not found');
+
+  		await addEmojiButtonElement.click();
+  });
 
     const fileInputElement = await page.waitForSelector('input#emojiimg');
     await fileInputElement.uploadFile(imagePath);
