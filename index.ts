@@ -1,4 +1,4 @@
-import { mkdirSync, createWriteStream, readFile } from 'fs';
+import { mkdirSync, createWriteStream, readFile, readdir } from 'fs';
 import { resolve, basename } from 'path';
 import { Page } from 'puppeteer';
 import * as puppeteer from 'puppeteer';
@@ -24,13 +24,14 @@ interface UserInput {
 }
 
 if (process.argv.length < 3) {
-    console.log('usage: slack-emoji-import path/to/emoji-pack.yaml');
+    console.log('usage: slack-emoji-import path/to/emoji-pack[.yaml]');
     process.exit(1);
 }
 
+const TYPING_DELAY = 20;
 const TEMP_DIR = resolve(__dirname, '.tmp');
 const ENTRY_URL_FACTORY = host => `https://${host}.slack.com/?redir=%2Fcustomize%2Femoji`;
-const YAML_PATH = resolve(process.cwd(), process.argv[2]);
+const EMOJI_SOURCE_PATH = resolve(process.cwd(), process.argv[2]);
 
 try {
     mkdirSync(TEMP_DIR);
@@ -53,14 +54,21 @@ async function start(): Promise<void> {
     await login(page, userInput);
     console.log('logged in.');
 
-    const emojiPack = await loadEmojiPack(YAML_PATH);
+    const emojiPack = await loadEmojiPack(EMOJI_SOURCE_PATH);
     for (let emoji of emojiPack.emojis) {
-        console.log(`downloading ${emoji.name}...`);
-        const imagePath = await downloadImage(emoji.src);
-        console.log(`downloaded  ${emoji.name}.`);
+        let imagePath: string;
+
+        if (emoji.src.includes('://')) {
+            console.log(`downloading ${emoji.name}...`);
+            imagePath = await downloadImage(emoji.src);
+            console.log(`downloaded  ${emoji.name}.`);
+        } else {
+            imagePath = emoji.src
+            console.log(`using local file for ${emoji.name}.`);
+        }
 
         console.log(`uploading ${emoji.name}...`);
-        await upload(page, imagePath, emoji.name).then(sleep(10));
+        await upload(page, imagePath, emoji.name).then(sleep(100));
         console.log(`uploaded  ${emoji.name}.`);
     }
     console.log(' ');
@@ -97,7 +105,7 @@ function getUserInput(): Promise<UserInput> {
                 type: 'boolean',
                 default: false,
                 required: false
-            },            
+            },
         ],
             (err, result) => err ? promiseReject(err) : promiseResolve(result),
         )
@@ -111,10 +119,11 @@ async function login(page: Page, userInput: UserInput): Promise<void> {
     await page.goto(ENTRY_URL_FACTORY(userInput.host));
 
     const emailInputSelector = '#signin_form input[type=email]';
-    await page.waitForSelector(emailInputSelector, { visible: true });
-    setInputElementValue(page, emailInputSelector, userInput.email);
+    await page.waitForSelector(emailInputSelector, { visible: true }).then(sleep(500));
+    
+    await setInputElementValue(page, emailInputSelector, userInput.email);
 
-    setInputElementValue(page, '#signin_form input[type=password]', userInput.password);
+    await setInputElementValue(page, '#signin_form input[type=password]', userInput.password);
 
     const signinButtonElement = await page.$('#signin_form #signin_btn');
     await signinButtonElement.click();
@@ -128,13 +137,38 @@ async function login(page: Page, userInput: UserInput): Promise<void> {
  */
 function loadEmojiPack(path: string): Promise<EmojiPack> {
     return new Promise((promiseResolve, promiseReject) => {
-        const yamlPath = resolve(__dirname, 'emoji', path);
-        readFile(yamlPath, (error, yamlContent) => {
-            if (error) {
-                promiseReject(new Error('Unable to read emoji pack.'));
-            }
-            promiseResolve(yaml.load(yamlContent.toString()));
-        });
+        const emojiPath = resolve(__dirname, 'emoji', path);
+        if (EMOJI_SOURCE_PATH.toLowerCase().endsWith('.yaml')) {
+            readFile(emojiPath, (error, yamlContent) => {
+                if (error) {
+                    promiseReject(new Error('Unable to read emoji pack.'));
+                    return;
+                }
+                promiseResolve(yaml.load(yamlContent.toString()));
+            });
+        } else {
+            readdir(emojiPath, (error, files) => {
+                if (error) {
+                    promiseReject(new Error('Unable to read emoji directory.'));
+                    return;
+                }
+                if (!files || files.length < 1) {
+                    promiseReject(new Error('Directory does not contain any files.'));
+                    return;
+                }
+                const emojis = files
+                    .filter(file => !!file.match(/\.jpg|gif|png|jpeg$/i))
+                    .map(file => {
+                        const src = resolve(emojiPath, file);
+                        const name = file.replace(/^(.*)\..*$/, '$1');
+                        return { src, name };
+                    });
+                promiseResolve({
+                    title: 'auto-generated',
+                    emojis,
+                });
+            });
+        }
     });
 }
 
@@ -160,40 +194,48 @@ function downloadImage(url: string): Promise<string> {
  * 
  */
 async function upload(page: Page, imagePath: string, name: string): Promise<void> {
-	await page.evaluate(async () => {
+    await page.evaluate(async () => {
 
-		var addEmojiButtonSelector = ".p-customize_emoji_wrapper__custom_button";
-		// Wait for emoji button to appear
-		while(!document.querySelector(addEmojiButtonSelector)) {
-			await new Promise(r => setTimeout(r, 500));
-		}
-		var class_name = addEmojiButtonSelector.substring(1, addEmojiButtonSelector.length);
-		const addEmojiButtonElement = <HTMLElement>document.getElementsByClassName(class_name)[0];
+        let addEmojiButtonSelector = ".p-customize_emoji_wrapper__custom_button";
+        // Wait for emoji button to appear
+        while (!document.querySelector(addEmojiButtonSelector)) {
+            await new Promise(r => setTimeout(r, 500));
+        }
+        let buttonClassName = addEmojiButtonSelector.substring(1, addEmojiButtonSelector.length);
+        const addEmojiButtonElement = <HTMLElement>document.getElementsByClassName(buttonClassName)[0];
 
-  		if (!addEmojiButtonElement)
-    		throw new Error('Add Emoji Button not found');
+        if (!addEmojiButtonElement)
+            throw new Error('Add Emoji Button not found');
 
-  		await addEmojiButtonElement.click();
-  });
+        addEmojiButtonElement.click();
+    });
 
     const fileInputElement = await page.waitForSelector('input#emojiimg');
     await fileInputElement.uploadFile(imagePath);
 
-    const nameInputElement = await page.$('#emojiname');
-    await nameInputElement.type(name);
+    await setInputElementValue(page, '#emojiname', name);
 
-    const saveEmojiButtonElement = await page.$('.c-sk-modal_footer_actions .c-button--primary');
+    const saveEmojiButtonSelector = '.c-sk-modal_footer_actions .c-button--primary';
+    const saveEmojiButtonElement = await page.waitForSelector(saveEmojiButtonSelector);
     await saveEmojiButtonElement.click();
 
-    await page.waitForSelector('.c-dialog__footer .c-button--primary', { hidden: true });
+    await page.waitForSelector(saveEmojiButtonSelector, { hidden: true });
 }
 
 /**
  * 
  */
 async function setInputElementValue(page: Page, querySelector: string, value: string) {
-    await page.waitForSelector(querySelector);
-    return page.$$eval(querySelector, (element: HTMLInputElement[], v) => element[0].value = v, value);
+    const element = await page.waitForSelector(querySelector);
+    // clear existing value
+    await page.focus(querySelector);
+    await page.keyboard.press('Home');
+    await page.keyboard.down('Shift');
+    await page.keyboard.press('End');
+    await page.keyboard.up('Shift');
+    await page.keyboard.press('Backspace');
+    // enter new value
+    await element.type(value, { delay: TYPING_DELAY });
 }
 
 /**
