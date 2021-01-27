@@ -182,7 +182,7 @@ async function upload(page: Page, imagePath: string, name: string): Promise<void
     const nameInputElement = await page.$('#emojiname');
     await nameInputElement.type(name);
 
-    const saveEmojiButtonElement = await page.$('.c-dialog__footer .c-button--primary');
+    const saveEmojiButtonElement = await page.$('.c-sk-modal_footer_actions .c-button--primary');
     await saveEmojiButtonElement.click();
 
     await page.waitForSelector('.c-dialog__footer .c-button--primary', { hidden: true });
